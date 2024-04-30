@@ -1,9 +1,32 @@
-import { useState,useEffect } from "react";
+import { useState,useEffect,useContext } from "react";
 import finnHub from "../APIs/finnHub";
+import { WatchListContext } from "../context/watchListContext";
 
 export const AutoComplete=()=>{
     const [search,setSearch]=useState("");
-    const [result,setResult]=useState([]);
+    const [results,setResults]=useState([]);
+    const { addStock }=useContext(WatchListContext);
+
+    const renderDropdown=()=>{
+        const dropdownClass= search ? "show": null
+        return (
+            <ul style={{
+                height:"500px",
+                overflowY:"scroll",
+                overflowX:"hidden",
+                cursor:"pointer"
+            }} className={`dropdown-menu ${dropdownClass}`}>
+            {results.map((result)=>{
+                return(
+                    <li onClick={()=>{
+                        addStock(result.symbol)
+                        setSearch("")
+                    }} key={result.symbol} className="dropdown-item">{result.description} ({result.symbol})</li>
+                )
+            })}
+        </ul>
+        )
+    }
     useEffect(()=>{
         let isMounted=true
         const fetchData=async()=>{
@@ -16,17 +39,20 @@ export const AutoComplete=()=>{
 
             console.log(response)
             if(isMounted){
-              setResult(response.data.result)  
+              setResults(response.data.result)  
             }
             
             }
             
             catch(err){
-                console.log(err)
+                
             }
         }
         if(search.length > 0){
           fetchData()  
+        }
+        else{
+            setResults([])
         }
         return ()=>(isMounted=false)
         
@@ -36,12 +62,7 @@ export const AutoComplete=()=>{
             <div className="form-floating dropdown">
                 <input style={{ backgroundColor:"rgba(145,178,171,0.04)"}} type="text" id="search" className="form-control" value={search} placeholder="Search" autoComplete="off" onChange={(e)=>setSearch(e.target.value)}/>
                 <label htmlFor="search">Search</label>
-                <ul className="dropdown-menu">
-                    <li>Stock 1</li>
-                    <li>Stock 2</li>
-                    <li>Stock 3</li>
-                </ul>
-
+                        {renderDropdown()}
             </div>
         </div>
     ) 
